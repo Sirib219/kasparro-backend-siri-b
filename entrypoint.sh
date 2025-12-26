@@ -5,13 +5,7 @@ echo "[STARTUP] Waiting for DB..."
 
 until python - <<EOF
 import psycopg2, os
-psycopg2.connect(
-    host=os.getenv("DB_HOST", "db"),
-    port=os.getenv("DB_PORT", "5432"),
-    user=os.getenv("POSTGRES_USER", "postgres"),
-    password=os.getenv("POSTGRES_PASSWORD", "postgres"),
-    dbname=os.getenv("POSTGRES_DB", "crypto"),
-)
+psycopg2.connect(os.environ["DATABASE_URL"])
 print("[STARTUP] DB is ready")
 EOF
 do
@@ -30,4 +24,5 @@ echo "[STARTUP] Running ETL..."
 python ingestion/etl_runner.py || echo "[WARN] ETL failed"
 
 echo "[STARTUP] Starting API..."
-exec uvicorn api.main:app --host 0.0.0.0 --port 8000
+PORT=${PORT:-8000}
+exec uvicorn api.main:app --host 0.0.0.0 --port $PORT
