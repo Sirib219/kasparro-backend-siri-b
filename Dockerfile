@@ -1,13 +1,18 @@
-FROM python:3.10-slim
+# -------- BUILDER STAGE --------
+FROM python:3.10-slim AS builder
 
 WORKDIR /app
 
-# ✅ MUST be here (not only in entrypoint)
+COPY requirements.txt .
+RUN pip install --no-cache-dir --prefix=/install -r requirements.txt
+
+# -------- RUNTIME STAGE --------
+FROM python:3.10-slim
+
+WORKDIR /app
 ENV PYTHONPATH=/app
 
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-
+COPY --from=builder /install /usr/local
 COPY . .
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh

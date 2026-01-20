@@ -1,16 +1,13 @@
 #!/bin/sh
 set -e
 
-echo "[STARTUP] Waiting for DB..."
+echo "[STARTUP] Checking DATABASE_URL..."
 
-until python - <<EOF
-import psycopg2, os
-psycopg2.connect(os.environ["DATABASE_URL"])
-print("[STARTUP] DB is ready")
+python - <<EOF
+import os
+assert os.getenv("DATABASE_URL"), "DATABASE_URL not set"
+print("[STARTUP] DATABASE_URL found")
 EOF
-do
-  sleep 2
-done
 
 echo "[STARTUP] Creating database tables..."
 python - <<EOF
@@ -24,5 +21,4 @@ echo "[STARTUP] Running ETL..."
 python ingestion/etl_runner.py || echo "[WARN] ETL failed"
 
 echo "[STARTUP] Starting API..."
-PORT=${PORT:-8000}
-exec uvicorn api.main:app --host 0.0.0.0 --port $PORT
+exec uvicorn api.main:app --host 0.0.0.0 --port "${PORT:-8000}"
